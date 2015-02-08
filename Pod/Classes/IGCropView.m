@@ -47,9 +47,12 @@
         self.bouncesZoom = YES;
         self.decelerationRate = UIScrollViewDecelerationRateFast;
         self.delegate = self;
+        
+
     }
     return self;
 }
+
 
 - (void)layoutSubviews
 {
@@ -72,9 +75,26 @@
         frameToCenter.origin.y = 0;
     
     self.imageView.frame = frameToCenter;
+    
+    self.videoStartMaskView.hidden = YES;
+    
+
+
 }
 
 
+-(UIImageView *)videoStartMaskView
+{
+    if(!_videoStartMaskView)
+    {
+        self.videoStartMaskView =[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"InstagramAssetsPicker.bundle/Start"] ];
+        //FIXME: should use constraint
+        self.videoStartMaskView.frame = CGRectMake(self.superview.frame.size.width / 2 + self.superview.frame.origin.x - 25, self.superview.frame.size.height / 2 + self.superview.frame.origin.y - 25, 50, 50);
+        [self.superview addSubview:self.videoStartMaskView];
+        self.videoStartMaskView.hidden = YES;
+    }
+    return _videoStartMaskView;
+}
 
 
 - (id)cropAsset
@@ -347,8 +367,9 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
     }
 
     
-    //remove start mask and add observer
-    [self.videoStartMaskView removeFromSuperview];
+    //hide start mask and add observer
+    self.videoStartMaskView.hidden = YES;
+
     [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
     
     
@@ -443,7 +464,8 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
     {
         _playState = 1;
         [self.videoPlayer play];
-        [self.videoStartMaskView removeFromSuperview];
+        self.videoStartMaskView.hidden = YES;
+
         
     }
 }
@@ -451,11 +473,10 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
 - (void) playerDidFinishedCallBack:(NSNotification *)notification
 {
     _playState = 2;
-    self.videoStartMaskView =[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Start"] ];
-    //FIXME: should use constraint
-    self.videoStartMaskView.frame = CGRectMake(self.superview.frame.size.width / 2 + self.superview.frame.origin.x - 25, self.superview.frame.size.height / 2 + self.superview.frame.origin.y - 25, 50, 50);
-    [self.superview addSubview:self.videoStartMaskView];
+    self.videoStartMaskView.hidden = NO;
+
 }
+
 
 #pragma mark - UIScrollViewDelegate
 

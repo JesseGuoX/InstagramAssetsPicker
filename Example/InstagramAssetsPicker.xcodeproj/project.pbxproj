@@ -25,11 +25,7 @@
 		C926A7C51A87934600F22831 /* IGAssetsCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = C926A7BF1A87934600F22831 /* IGAssetsCollectionViewCell.m */; };
 		C926A7C61A87934600F22831 /* IGAssetsPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C926A7C11A87934600F22831 /* IGAssetsPickerViewController.m */; };
 		C926A7C71A87934600F22831 /* IGCropView.m in Sources */ = {isa = PBXBuildFile; fileRef = C926A7C31A87934600F22831 /* IGCropView.m */; };
-		C926A7D01A87935300F22831 /* back@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C926A7CA1A87935300F22831 /* back@2x.png */; };
-		C926A7D11A87935300F22831 /* cameraroll-picker-grip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C926A7CB1A87935300F22831 /* cameraroll-picker-grip@2x.png */; };
-		C926A7D21A87935300F22831 /* Start@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C926A7CC1A87935300F22831 /* Start@2x.png */; };
-		C926A7D31A87935300F22831 /* straighten-grid@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C926A7CD1A87935300F22831 /* straighten-grid@2x.png */; };
-		C926A7D41A87935300F22831 /* video_icon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = C926A7CE1A87935300F22831 /* video_icon@2x.png */; };
+		C926A7D61A87A05D00F22831 /* InstagramAssetsPicker.bundle in Resources */ = {isa = PBXBuildFile; fileRef = C926A7D51A87A05D00F22831 /* InstagramAssetsPicker.bundle */; };
 		C9C3AEDB1A811CCE003F32E3 /* Launch Screen.xib in Resources */ = {isa = PBXBuildFile; fileRef = C9C3AEDA1A811CCE003F32E3 /* Launch Screen.xib */; };
 		C9C8C1181A812AA0001A4E51 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C9C8C1161A812AA0001A4E51 /* Main.storyboard */; };
 /* End PBXBuildFile section */
@@ -77,11 +73,7 @@
 		C926A7C11A87934600F22831 /* IGAssetsPickerViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IGAssetsPickerViewController.m; sourceTree = "<group>"; };
 		C926A7C21A87934600F22831 /* IGCropView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IGCropView.h; sourceTree = "<group>"; };
 		C926A7C31A87934600F22831 /* IGCropView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IGCropView.m; sourceTree = "<group>"; };
-		C926A7CA1A87935300F22831 /* back@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "back@2x.png"; sourceTree = "<group>"; };
-		C926A7CB1A87935300F22831 /* cameraroll-picker-grip@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "cameraroll-picker-grip@2x.png"; sourceTree = "<group>"; };
-		C926A7CC1A87935300F22831 /* Start@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Start@2x.png"; sourceTree = "<group>"; };
-		C926A7CD1A87935300F22831 /* straighten-grid@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "straighten-grid@2x.png"; sourceTree = "<group>"; };
-		C926A7CE1A87935300F22831 /* video_icon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "video_icon@2x.png"; sourceTree = "<group>"; };
+		C926A7D51A87A05D00F22831 /* InstagramAssetsPicker.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = InstagramAssetsPicker.bundle; sourceTree = "<group>"; };
 		C9C3AEDA1A811CCE003F32E3 /* Launch Screen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "Launch Screen.xib"; sourceTree = "<group>"; };
 		C9C3AEE31A81229A003F32E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C9C8C1171A812AA0001A4E51 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -234,11 +226,7 @@
 		C926A7C81A87935300F22831 /* Assets */ = {
 			isa = PBXGroup;
 			children = (
-				C926A7CA1A87935300F22831 /* back@2x.png */,
-				C926A7CB1A87935300F22831 /* cameraroll-picker-grip@2x.png */,
-				C926A7CC1A87935300F22831 /* Start@2x.png */,
-				C926A7CD1A87935300F22831 /* straighten-grid@2x.png */,
-				C926A7CE1A87935300F22831 /* video_icon@2x.png */,
+				C926A7D51A87A05D00F22831 /* InstagramAssetsPicker.bundle */,
 			);
 			name = Assets;
 			path = ../../Pod/Assets;
@@ -350,15 +338,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C926A7D41A87935300F22831 /* video_icon@2x.png in Resources */,
+				C926A7D61A87A05D00F22831 /* InstagramAssetsPicker.bundle in Resources */,
 				6003F5A9195388D20070C39A /* Images.xcassets in Resources */,
 				C9C3AEDB1A811CCE003F32E3 /* Launch Screen.xib in Resources */,
-				C926A7D21A87935300F22831 /* Start@2x.png in Resources */,
-				C926A7D01A87935300F22831 /* back@2x.png in Resources */,
 				6003F598195388D20070C39A /* InfoPlist.strings in Resources */,
-				C926A7D11A87935300F22831 /* cameraroll-picker-grip@2x.png in Resources */,
 				C9C8C1181A812AA0001A4E51 /* Main.storyboard in Resources */,
-				C926A7D31A87935300F22831 /* straighten-grid@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -10,28 +10,20 @@
 Pod::Spec.new do |s|
   s.name             = "InstagramAssetsPicker"
   s.version          = "0.1.0"
-  s.summary          = "A assets picker like Instagram."
-  s.description      = <<-DESC
-                       An optional longer description of InstagramAssetsPicker
+  s.summary          = "A assets picker like Instagram with photo and video crop"
 
-                       * Markdown format.
-                       * Don't worry about the indent, we strip it!
-                       DESC
-  s.homepage         = "https://github.com/<GITHUB_USERNAME>/InstagramAssetsPicker"
+  s.homepage         = "https://github.com/JGINGIT/InstagramAssetsPicker"
   # s.screenshots     = "www.example.com/screenshots_1", "www.example.com/screenshots_2"
   s.license          = 'MIT'
   s.author           = { "JG" => "jezzegoo@gmail.com" }
-  s.source           = { :git => "~/GitHub/InstagramAssetsPicker" }
-#{ :git => "https://github.com/<GITHUB_USERNAME>/InstagramAssetsPicker.git", :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
+  s.source           = { :git => "https://github.com/JGINGIT/InstagramAssetsPicker.git", :tag => s.version.to_s }
 
   s.platform     = :ios, '7.0'
   s.requires_arc = true
 
   s.source_files = 'Pod/Classes/**/*'
-  s.resource_bundles = {
-    'InstagramAssetsPicker' => ['Pod/Assets/*.png']
-  }
+  s.resources = 'Pod/Assets/InstagramAssetsPicker.bundle'
+
   s.dependency 'GPUImage', '~> 0.1.6'
 
   # s.public_header_files = 'Pod/Classes/**/*.h'

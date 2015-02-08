@@ -25,7 +25,7 @@ static UIColor *videoTitleColor;
 
 + (void)initialize
 {
-    videoIcon       = [UIImage imageNamed:@"video_icon"];
+    videoIcon       = [UIImage imageNamed:@"InstagramAssetsPicker.bundle/video_icon"];
     videoTitleColor      = [UIColor whiteColor];
     videoTimeFont       = [UIFont systemFontOfSize:12];
     videoTimeHeight     = 20.0f;
