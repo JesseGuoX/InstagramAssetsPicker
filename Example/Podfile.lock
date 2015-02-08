@@ -1,0 +1,17 @@
+PODS:
+  - GPUImage (0.1.6)
+  - InstagramAssetsPicker (0.1.0):
+    - GPUImage (~> 0.1.6)
+
+DEPENDENCIES:
+  - InstagramAssetsPicker (from `../`)
+
+EXTERNAL SOURCES:
+  InstagramAssetsPicker:
+    :path: ../
+
+SPEC CHECKSUMS:
+  GPUImage: eb48ad0bf4da8bee3dcd2e2703b1fdc027b3f051
+  InstagramAssetsPicker: 84e35ee91e7e76e14842060e9ab02a0988cc6e54
+
+COCOAPODS: 0.35.0

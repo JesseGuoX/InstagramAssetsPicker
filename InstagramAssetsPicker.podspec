@@ -10,7 +10,7 @@
 Pod::Spec.new do |s|
   s.name             = "InstagramAssetsPicker"
   s.version          = "0.1.0"
-  s.summary          = "A short description of InstagramAssetsPicker."
+  s.summary          = "A assets picker like Instagram."
   s.description      = <<-DESC
                        An optional longer description of InstagramAssetsPicker
 
@@ -21,7 +21,8 @@ Pod::Spec.new do |s|
   # s.screenshots     = "www.example.com/screenshots_1", "www.example.com/screenshots_2"
   s.license          = 'MIT'
   s.author           = { "JG" => "jezzegoo@gmail.com" }
-  s.source           = { :git => "https://github.com/<GITHUB_USERNAME>/InstagramAssetsPicker.git", :tag => s.version.to_s }
+  s.source           = { :git => "~/GitHub/InstagramAssetsPicker" }
+#{ :git => "https://github.com/<GITHUB_USERNAME>/InstagramAssetsPicker.git", :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
   s.platform     = :ios, '7.0'
@@ -31,8 +32,9 @@ Pod::Spec.new do |s|
   s.resource_bundles = {
     'InstagramAssetsPicker' => ['Pod/Assets/*.png']
   }
+  s.dependency 'GPUImage', '~> 0.1.6'
 
   # s.public_header_files = 'Pod/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
+
 end

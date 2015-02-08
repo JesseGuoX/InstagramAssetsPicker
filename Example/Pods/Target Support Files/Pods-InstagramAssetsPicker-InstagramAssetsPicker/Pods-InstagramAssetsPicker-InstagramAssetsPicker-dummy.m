@@ -1,0 +1,5 @@
+#import <Foundation/Foundation.h>
+@interface PodsDummy_Pods_InstagramAssetsPicker_InstagramAssetsPicker : NSObject
+@end
+@implementation PodsDummy_Pods_InstagramAssetsPicker_InstagramAssetsPicker
+@end
