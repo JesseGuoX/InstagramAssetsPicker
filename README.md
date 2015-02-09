@@ -6,6 +6,7 @@
 
 Present Image Picker like Instagram, crop photo and video with GPUImage.
 
+![GIF](https://github.com/JGINGIT/InstagramAssetsPicker/blob/master/screen.gif)
 
 ## Usage
 
