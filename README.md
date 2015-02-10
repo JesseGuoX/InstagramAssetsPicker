@@ -1,8 +1,8 @@
 # InstagramAssetsPicker
 
-
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)]()
-[![Platform](https://img.shields.io/cocoapods/p/TWPhotoPicker.svg)]()
+[![Version](https://img.shields.io/cocoapods/v/InstagramAssetsPicker.svg)]()
+[![License](https://img.shields.io/cocoapods/l/InstagramAssetsPicker.svg)]()
+[![Platform](https://img.shields.io/cocoapods/p/InstagramAssetsPicker.svg)]()
 
 Present Image Picker like Instagram, crop photo and video with GPUImage.
 
