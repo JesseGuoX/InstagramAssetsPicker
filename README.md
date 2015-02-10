@@ -8,9 +8,12 @@ Present Image Picker like Instagram, crop photo and video with GPUImage.
 
 ![GIF](https://github.com/JGINGIT/InstagramAssetsPicker/blob/master/screen.gif)
 
-## Usage
 
-To run the example project, will available through CocoaPods soon
+## Installation
+
+With [CocoaPods](http://cocoapods.org/), add this line to your Podfile.
+
+    pod 'InstagramAssetsPicker'
 
 ## Requirements
 
