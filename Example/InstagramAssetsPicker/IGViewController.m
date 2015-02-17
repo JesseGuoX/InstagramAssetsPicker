@@ -7,11 +7,11 @@
 //
 
 #import "IGViewController.h"
-#import "IGAssetsPickerViewController.h"
+#import "IGAssetsPicker.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
 
-@interface IGViewController ()
+@interface IGViewController ()<IGAssetsPickerDelegate>
 @property (strong, nonatomic) IBOutlet UIImageView *imageView;
 @property (nonatomic, strong) MPMoviePlayerController *videoPlayer;
 
@@ -39,28 +39,35 @@
 
 - (IBAction)showPickerAction:(id)sender {
     IGAssetsPickerViewController *picker = [[IGAssetsPickerViewController alloc] init];
+    picker.delegate = self;
 
-    picker.cropAsset = ^(id asset)
-    {
-        if([asset isKindOfClass:[UIImage class]])//photo
-        {
-            [self.videoPlayer stop];
-            self.videoPlayer.view.hidden = YES;
-            self.imageView.hidden = NO;
-            self.imageView.image = (UIImage *)asset;
-        }
-        else if([asset isKindOfClass:[AVAsset class]])//video
-        {
-            self.videoPlayer.contentURL = ((AVURLAsset *)asset).URL;
-            self.videoPlayer.view.hidden = NO;
-            self.imageView.hidden = YES;
-            self.videoPlayer.view.frame = self.imageView.frame;
-            
-            [self.videoPlayer play];
-        }
-    
-    };
     [self presentViewController:picker animated:YES completion:NULL];
 }
 
+#pragma mark - IGAssetsPickerDelegate
+
+-(void)IGAssetsPickerFinishCroppingToAsset:(id)asset
+{
+    if([asset isKindOfClass:[UIImage class]])//photo
+    {
+        [self.videoPlayer stop];
+        self.videoPlayer.view.hidden = YES;
+        self.imageView.hidden = NO;
+        self.imageView.image = (UIImage *)asset;
+    }
+    else if([asset isKindOfClass:[AVAsset class]])//video
+    {
+        self.videoPlayer.contentURL = ((AVURLAsset *)asset).URL;
+        self.videoPlayer.view.hidden = NO;
+        self.imageView.hidden = YES;
+        self.videoPlayer.view.frame = self.imageView.frame;
+        
+        [self.videoPlayer play];
+    }
+}
+
+-(void)IGAssetsPickerGetCropRegion:(CGRect)rect withAlAsset:(id)asset
+{
+    
+}
 @end

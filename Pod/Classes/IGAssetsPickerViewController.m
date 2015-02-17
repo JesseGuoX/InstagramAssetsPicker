@@ -9,6 +9,7 @@
 #import "IGAssetsPickerViewController.h"
 #import "IGCropView.h"
 #import "IGAssetsCollectionViewCell.h"
+#import "IGAssetsPicker.h"
 
 @interface IGAssetsPickerViewController ()<UICollectionViewDataSource, UICollectionViewDelegate, UIGestureRecognizerDelegate>
 {
@@ -83,7 +84,7 @@
         if (group == nil) {
             if (self.assets.count) {
                 ALAsset * asset = [self.assets objectAtIndex:0];
-                [self.cropView displayAsset:asset];
+                [self.cropView setAlAsset:asset];
             }
             [self.collectionView reloadData];
         }
@@ -219,10 +220,24 @@
 }
 
 - (void)cropAction {
-    if(self.cropAsset)
+    
+#ifdef IG_CROP_IMMEDIATELY
+    
+    if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerFinishCroppingToAsset:)])
     {
-        self.cropAsset(self.cropView.cropAsset);
+        id asset = [self.cropView cropAsset];
+        [self.delegate IGAssetsPickerFinishCroppingToAsset:asset];
+        
     }
+#else
+    if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerGetCropRegion: withAsset:)])
+    {
+        CGRect rect = [self.cropView getCropRegion];
+        [self.delegate IGAssetsPickerGetCropRegion:rect withAlAsset:self.cropView.alAsset];
+    }
+
+#endif
+
     [self backAction];
 }
 
@@ -319,7 +334,7 @@
     
     ALAsset * asset = [self.assets objectAtIndex:indexPath.row];
     
-    [self.cropView displayAsset:asset];
+    [self.cropView setAlAsset:asset];
     
     UICollectionViewCell * cell = [collectionView cellForItemAtIndexPath:indexPath];
     

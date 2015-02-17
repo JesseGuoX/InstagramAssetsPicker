@@ -15,14 +15,15 @@ With [CocoaPods](http://cocoapods.org/), add this line to your Podfile.
 
     pod 'InstagramAssetsPicker'
 
-## Requirements
+## Usage
 
-<!--## Installation
-
-InstagramAssetsPicker is NOT available through [CocoaPods](http://cocoapods.org) YET. To install
-it, simply add the following line to your Podfile:
-
-    pod "InstagramAssetsPicker"-->
+``` objective-c
+#import "IGAssetsPicker.h"
+IGAssetsPickerViewController *picker = [[IGAssetsPickerViewController alloc] init];
+picker.delegate = self;
+[self presentViewController:picker animated:YES completion:NULL];
+```
+if you want crop the asset later,you should comment the `IG_CROP_IMMEDIATELY` define in `IGAssetsPicker.h`
 
 ## Author
 

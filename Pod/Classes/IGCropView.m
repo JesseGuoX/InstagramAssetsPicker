@@ -19,16 +19,11 @@
     NSString * _type;
     
     AVAssetExportSession *exporter;
-
-    GPUImageMovie *movieFile;
-    GPUImageOutput<GPUImageInput> *filter;
-    GPUImageMovieWriter *movieWriter;
 }
 
 @property (strong, nonatomic) UIImageView *imageView;
 @property (nonatomic, strong) MPMoviePlayerController *videoPlayer;
 @property (nonatomic) CGFloat videoPlayerScale;
-@property (nonatomic, strong) ALAsset *asset;
 @property (strong, nonatomic) UIImageView * videoStartMaskView;
 
 @end
@@ -53,6 +48,13 @@
     return self;
 }
 
+
+
+-(void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
+
+}
 
 - (void)layoutSubviews
 {
@@ -96,28 +98,118 @@
     return _videoStartMaskView;
 }
 
-
-- (id)cropAsset
+-(CGRect)getCropRegion
 {
-    if(self.asset)
+    if(self.alAsset)
     {
         if([_type isEqualToString:ALAssetTypePhoto])
         {
-            UIImage * image = [self capture];
-            return image;
+            CGRect visibleRect = [self _calcVisibleRectForCropArea];//caculate visible rect for crop
+            CGAffineTransform rectTransform = [self _orientationTransformedRectOfImage:self.imageView.image];//if need rotate caculate
+            visibleRect = CGRectApplyAffineTransform(visibleRect, rectTransform);
+            
+            //convert to 0-1
+            CGAffineTransform t;
+            if((self.imageView.image.imageOrientation == UIImageOrientationLeft) || ((self.imageView.image.imageOrientation == UIImageOrientationRight)))
+                t = CGAffineTransformMakeScale(1.0f / self.imageView.image.size.height, 1.0f / self.imageView.image.size.width);
+            else
+                t = CGAffineTransformMakeScale(1.0f / self.imageView.image.size.width, 1.0f / self.imageView.image.size.height);
+            
+            CGRect unitRect = CGRectApplyAffineTransform(visibleRect, t);
+            
+            //incase <0 or >1
+            
+            unitRect = [self rangeRestrictForRect:unitRect];
+            
+            return unitRect;
         }
         else if([_type isEqualToString:ALAssetTypeVideo])
         {
-            AVAsset * asset = [self CropVideo];
-            return asset;
+            UIInterfaceOrientation orientation = [IGCropView orientationForTrack:[AVAsset assetWithURL:self.alAsset.defaultRepresentation.url]];
+            
+            
+            CGRect visibleRect = [self convertRect:self.bounds toView:self.videoPlayer.view];
+            
+            CGAffineTransform t = CGAffineTransformMakeScale( 1 / self.videoPlayerScale, 1 / self.videoPlayerScale);
+            
+            visibleRect = CGRectApplyAffineTransform(visibleRect, t);
+            
+            //竖屏的视频裁剪框要先转换为横屏模式
+            CGFloat y;
+            switch (orientation)
+            {
+                case UIInterfaceOrientationLandscapeLeft:
+                    
+                    break;
+                case UIInterfaceOrientationLandscapeRight:
+                    
+                    break;
+                case UIInterfaceOrientationPortraitUpsideDown:
+                    y =  visibleRect.origin.y;
+                    visibleRect.origin.y = visibleRect.origin.x;
+                    visibleRect.origin.x = y;
+                    break;
+                default:
+                    y =  visibleRect.origin.y;
+                    visibleRect.origin.y = visibleRect.origin.x;
+                    visibleRect.origin.x = y;
+            };
+            
+            //得到videoTrack正常播放时候进行转换的transform
+            AVAssetTrack *videoTrack = [[[AVAsset assetWithURL:self.alAsset.defaultRepresentation.url] tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
+            CGAffineTransform txf = [videoTrack preferredTransform];
+            //要剪切的矩形进行坐标转换
+            visibleRect = CGRectApplyAffineTransform(visibleRect, txf);
+            
+            //转换为0-1
+            t = CGAffineTransformMakeScale(1.0f / self.alAsset.defaultRepresentation.dimensions.width, 1.0f / self.alAsset.defaultRepresentation.dimensions.height);
+            
+            CGRect croprect = CGRectApplyAffineTransform(visibleRect, t);
+            
+            croprect = [self rangeRestrictForRect:croprect];
+            
+            return croprect;
+            
+        }
+        else
+            return CGRectNull;
+    }
+    else
+        return CGRectNull;
+    
 
+}
+
+
+- (id)cropAsset
+{
+    return [IGCropView cropAlAsset:self.alAsset withRegion:[self getCropRegion]];
+
+}
+
+
++(id)cropAlAsset:(ALAsset *)asset withRegion:(CGRect)rect
+{
+    if(asset)
+    {
+        if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto])//photo
+        {
+            UIImage * image = [UIImage imageWithCGImage:asset.defaultRepresentation.fullResolutionImage scale:asset.defaultRepresentation.scale orientation:(UIImageOrientation)asset.defaultRepresentation.orientation];
+
+            return [self cropImage:image withRegion:rect];
+            
+        }
+        else if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])//video
+        {
+            AVAsset * avAsset = [self cropVideo:asset withRegion:rect];
+            return avAsset;
+            
         }
         else
             return nil;
     }
     else
         return nil;
-
 }
 
 
@@ -139,78 +231,43 @@
 
 
 #pragma mark -Video Process
-- (AVAsset *)CropVideo
+
+
++ (AVAsset *)cropVideo:(ALAsset *)alAsset withRegion:(CGRect)rect
 {
-    
-    UIInterfaceOrientation orientation = [IGCropView orientationForTrack:[AVAsset assetWithURL:self.asset.defaultRepresentation.url]];
-    AVAsset *asset = [AVAsset assetWithURL:self.asset.defaultRepresentation.url];
+    AVAsset *asset = [AVAsset assetWithURL:alAsset.defaultRepresentation.url];
 
+    UIInterfaceOrientation orientation = [IGCropView orientationForTrack:[AVAsset assetWithURL:alAsset.defaultRepresentation.url]];
     
-    CGRect visibleRect = [self convertRect:self.bounds toView:self.videoPlayer.view];
-
-    CGAffineTransform t = CGAffineTransformMakeScale( 1 / self.videoPlayerScale, 1 / self.videoPlayerScale);
-    
-    visibleRect = CGRectApplyAffineTransform(visibleRect, t);
-    
-    //竖屏的视频裁剪框要先转换为横屏模式
-    CGFloat y;
-    switch (orientation)
-    {
-        case UIInterfaceOrientationLandscapeLeft:
-            
-            break;
-        case UIInterfaceOrientationLandscapeRight:
-            
-            break;
-        case UIInterfaceOrientationPortraitUpsideDown:
-            y =  visibleRect.origin.y;
-            visibleRect.origin.y = visibleRect.origin.x;
-            visibleRect.origin.x = y;
-            break;
-        default:
-            y =  visibleRect.origin.y;
-            visibleRect.origin.y = visibleRect.origin.x;
-            visibleRect.origin.x = y;
-    };
-    
-    //得到videoTrack正常播放时候进行转换的transform
-    AVAssetTrack *videoTrack = [[[AVAsset assetWithURL:self.asset.defaultRepresentation.url] tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
-    CGAffineTransform txf = [videoTrack preferredTransform];
-    //要剪切的矩形进行坐标转换
-    visibleRect = CGRectApplyAffineTransform(visibleRect, txf);
-    
-    //转换为0-1
-    t = CGAffineTransformMakeScale(1.0f / self.asset.defaultRepresentation.dimensions.width, 1.0f / self.asset.defaultRepresentation.dimensions.height);
-    
-    CGRect croprect = CGRectApplyAffineTransform(visibleRect, t);
-    
-    croprect = [self rangeRestrictForRect:croprect];
+    GPUImageMovie *movieFile;
+    GPUImageOutput<GPUImageInput> *filter;
+    GPUImageMovieWriter *movieWriter;
     
     movieFile = [[GPUImageMovie alloc] initWithAsset:asset];
     movieFile.runBenchmark = YES;
     movieFile.playAtActualSpeed = NO;
     
-    filter = [[GPUImageCropFilter alloc] initWithCropRegion:croprect];
+    filter = [[GPUImageCropFilter alloc] initWithCropRegion:rect];
     //the camera sensor default orientation is LandscapeLeft
     switch (orientation)
     {
         case UIInterfaceOrientationLandscapeLeft:
             [filter setInputRotation:kGPUImageNoRotation atIndex:0];
-
+            
             break;
         case UIInterfaceOrientationLandscapeRight:
             [filter setInputRotation:kGPUImageRotate180 atIndex:0];
-
+            
             break;
         case UIInterfaceOrientationPortraitUpsideDown:
             [filter setInputRotation:kGPUImageRotateLeft atIndex:0];
-
+            
             break;
         default:
             [filter setInputRotation:kGPUImageRotateRight atIndex:0];
-
+            
     };
-
+    
     
     [movieFile addTarget:filter];
     
@@ -229,10 +286,10 @@
     [movieWriter startRecording];
     [movieFile startProcessing];
     
-//    __weak GPUImageMovieWriter * weakWriter = movieWriter;
-//    __weak GPUImageOutput<GPUImageInput>  * weakFilter = filter;
+    //    __weak GPUImageMovieWriter * weakWriter = movieWriter;
+    //    __weak GPUImageOutput<GPUImageInput>  * weakFilter = filter;
     
-    //FIXME: 
+    //FIXME:
     __block BOOL finished = NO;
     [movieWriter setCompletionBlock:^{
         NSLog(@"Completed Successfully");
@@ -247,56 +304,21 @@
 
 
 
-
-
 #pragma mark -Image Process
-- (UIImage *)capture
+
++ (UIImage *)cropImage:(UIImage *)image withRegion:(CGRect)rect
 {
+    GPUImagePicture * picture = [[GPUImagePicture alloc] initWithImage:image];
     
-#warning 为什么一processing直接就能得到，GPU比CPU快这么多？
-    
-    CGRect visibleRect = [self _calcVisibleRectForCropArea];//caculate visible rect for crop
-    CGAffineTransform rectTransform = [self _orientationTransformedRectOfImage:self.imageView.image];//if need rotate caculate
-    visibleRect = CGRectApplyAffineTransform(visibleRect, rectTransform);
-
-    //convert to 0-1
-    CGAffineTransform t;
-    if((self.imageView.image.imageOrientation == UIImageOrientationLeft) || ((self.imageView.image.imageOrientation == UIImageOrientationRight)))
-     t = CGAffineTransformMakeScale(1.0f / self.imageView.image.size.height, 1.0f / self.imageView.image.size.width);
-    else
-     t = CGAffineTransformMakeScale(1.0f / self.imageView.image.size.width, 1.0f / self.imageView.image.size.height);
-    
-    CGRect unitRect = CGRectApplyAffineTransform(visibleRect, t);
-    
-    //incase <0 or >1
-
-    unitRect = [self rangeRestrictForRect:unitRect];
-
-    
-    GPUImagePicture * picture = [[GPUImagePicture alloc] initWithImage:self.imageView.image];
-    
-    
-    GPUImageCropFilter * cropFilter = [[GPUImageCropFilter alloc] initWithCropRegion:unitRect];
+    GPUImageCropFilter * cropFilter = [[GPUImageCropFilter alloc] initWithCropRegion:rect];
     
     [picture addTarget:cropFilter];
     [cropFilter useNextFrameForImageCapture];
     [picture processImage];
-
-    UIImage * image =[cropFilter imageFromCurrentFramebufferWithOrientation:self.imageView.image.imageOrientation];
-    return image;
     
-    
-    
-    
-//    CGRect visibleRect = [self _calcVisibleRectForCropArea];//caculate visible rect for crop
-//    CGAffineTransform rectTransform = [self _orientationTransformedRectOfImage:self.imageView.image];//if need rotate caculate
-//    visibleRect = CGRectApplyAffineTransform(visibleRect, rectTransform);
-//    
-//    CGImageRef ref = CGImageCreateWithImageInRect([self.imageView.image CGImage], visibleRect);//crop
-//    UIImage* cropped = [[UIImage alloc] initWithCGImage:ref scale:self.imageView.image.scale orientation:self.imageView.image.imageOrientation] ;
-//    return cropped;
+    UIImage * returnImage =[cropFilter imageFromCurrentFramebufferWithOrientation:image.imageOrientation];
+    return returnImage;
 }
-
 
 
 static CGRect IGScaleRect(CGRect rect, CGFloat scale)
@@ -352,9 +374,10 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
 }
 
 
-- (void)displayAsset:(ALAsset *)asset
+
+- (void)setAlAsset:(ALAsset *)asset
 {
-    self.asset = asset;
+    _alAsset = asset;
     _type   = [asset valueForProperty:ALAssetPropertyType];
     
     // clear the previous image
@@ -470,6 +493,7 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
     }
 }
 
+#pragma mark - MPMoviePlayerController Notification
 - (void) playerDidFinishedCallBack:(NSNotification *)notification
 {
     _playState = 2;

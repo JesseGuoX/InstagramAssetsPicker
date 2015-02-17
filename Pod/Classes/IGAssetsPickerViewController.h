@@ -10,6 +10,17 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <AVFoundation/AVFoundation.h>
 
-@interface IGAssetsPickerViewController : UIViewController
-@property (nonatomic, copy) void(^cropAsset)(id asset);
+@protocol IGAssetsPickerDelegate <NSObject>
+
+//get crop region , range:0-1, you can crop when user post for good UE
+-(void)IGAssetsPickerGetCropRegion:(CGRect)rect withAlAsset:(ALAsset *)asset;
+
+//crop immediatly
+-(void)IGAssetsPickerFinishCroppingToAsset:(id)asset;
+
 @end
+
+@interface IGAssetsPickerViewController : UIViewController
+@property (nonatomic, strong) id<IGAssetsPickerDelegate> delegate;
+@end
+

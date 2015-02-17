@@ -12,9 +12,13 @@
 #import <AVFoundation/AVFoundation.h>
 
 @interface IGCropView : UIScrollView
-
-- (void)displayAsset:(ALAsset *)asset;
+@property (nonatomic, strong) ALAsset * alAsset;
 
 - (id)cropAsset;
+
+- (CGRect)getCropRegion;
+
+//for lately crop
++(id)cropAlAsset:(ALAsset *)asset withRegion:(CGRect)rect;
 
 @end

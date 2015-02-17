@@ -67,6 +67,7 @@
 		A97C7C73BE66607373CD5832 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		BD206B498DBEAF5495489DB1 /* Pods-InstagramAssetsPicker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-InstagramAssetsPicker.debug.xcconfig"; path = "Pods/Target Support Files/Pods-InstagramAssetsPicker/Pods-InstagramAssetsPicker.debug.xcconfig"; sourceTree = "<group>"; };
 		BEB25A2B0DDDFBAA79E038BA /* Pods-Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Tests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Tests/Pods-Tests.debug.xcconfig"; sourceTree = "<group>"; };
+		C9149FBA1A93575200CDC1D8 /* IGAssetsPicker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IGAssetsPicker.h; sourceTree = "<group>"; };
 		C926A7BE1A87934600F22831 /* IGAssetsCollectionViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IGAssetsCollectionViewCell.h; sourceTree = "<group>"; };
 		C926A7BF1A87934600F22831 /* IGAssetsCollectionViewCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IGAssetsCollectionViewCell.m; sourceTree = "<group>"; };
 		C926A7C01A87934600F22831 /* IGAssetsPickerViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IGAssetsPickerViewController.h; sourceTree = "<group>"; };
@@ -216,6 +217,7 @@
 				C926A7BF1A87934600F22831 /* IGAssetsCollectionViewCell.m */,
 				C926A7C01A87934600F22831 /* IGAssetsPickerViewController.h */,
 				C926A7C11A87934600F22831 /* IGAssetsPickerViewController.m */,
+				C9149FBA1A93575200CDC1D8 /* IGAssetsPicker.h */,
 				C926A7C21A87934600F22831 /* IGCropView.h */,
 				C926A7C31A87934600F22831 /* IGCropView.m */,
 			);
