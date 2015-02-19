@@ -230,7 +230,7 @@
         
     }
 #else
-    if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerGetCropRegion: withAsset:)])
+    if(self.delegate && [self.delegate respondsToSelector:@selector(IGAssetsPickerGetCropRegion: withAlAsset:)])
     {
         CGRect rect = [self.cropView getCropRegion];
         [self.delegate IGAssetsPickerGetCropRegion:rect withAlAsset:self.cropView.alAsset];
