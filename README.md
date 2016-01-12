@@ -6,7 +6,7 @@
 
 Present Image Picker like Instagram, crop photo and video with GPUImage.
 
-![GIF](https://github.com/JGINGIT/InstagramAssetsPicker/blob/master/screen.gif)
+![GIF](screen.gif)
 
 
 ## Installation
@@ -27,7 +27,7 @@ if you want crop the asset later,you should comment the `IG_CROP_IMMEDIATELY` de
 
 ## Author
 
-[JG](https://github.com/JGINGIT)
+[JG](https://github.com/Jexbat)
 
 ## Reference
 [InstagramPhotoPicker](https://github.com/wenzhaot/InstagramPhotoPicker)
