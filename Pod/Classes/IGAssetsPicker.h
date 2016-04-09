@@ -11,6 +11,4 @@
 
 #import "IGAssetsPickerViewController.h"
 
-#define IG_CROP_IMMEDIATELY 
-
 #endif
