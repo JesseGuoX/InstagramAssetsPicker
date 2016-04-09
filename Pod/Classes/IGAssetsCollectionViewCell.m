@@ -9,9 +9,9 @@
 #import "IGAssetsCollectionViewCell.h"
 
 @interface IGAssetsCollectionViewCell()
-@property (nonatomic, strong) ALAsset *asset;
+@property (nonatomic, strong) PHAsset *asset;
 @property (nonatomic, strong) UIImage *image;
-@property (nonatomic, copy) NSString *type;
+@property (nonatomic, assign) PHAssetMediaType type;
 @property (nonatomic, copy) NSString *title;
 
 @end
@@ -51,13 +51,32 @@ static UIColor *videoTitleColor;
     
 }
 
--(void)applyAsset:(ALAsset *)asset
+
+-(void)applyAsset:(PHAsset *)asset
 {
     
     self.asset  = asset;
-    self.image  = [UIImage imageWithCGImage:asset.thumbnail];
-    self.type   = [asset valueForProperty:ALAssetPropertyType];
-    self.title  = [IGAssetsCollectionViewCell getTimeStringOfTimeInterval:[[asset valueForProperty:ALAssetPropertyDuration] doubleValue]];
+    self.type   = [asset mediaType];
+    self.title  = [IGAssetsCollectionViewCell getTimeStringOfTimeInterval:asset.duration];
+    
+    PHImageRequestOptions *options = [[PHImageRequestOptions alloc] init];
+    options.resizeMode = PHImageRequestOptionsResizeModeExact;
+    options.networkAccessAllowed = true;
+    options.synchronous = true;
+    
+    NSInteger retinaMultiplier = [UIScreen mainScreen].scale;
+    CGSize retinaSquare = CGSizeMake(75 * retinaMultiplier, 75 * retinaMultiplier);
+    
+    [[PHImageManager defaultManager]
+     requestImageForAsset:asset
+     targetSize:retinaSquare
+     contentMode:PHImageContentModeAspectFill
+     options:options
+     resultHandler:^(UIImage *result, NSDictionary *info) {
+         
+         self.image = [UIImage imageWithCGImage:result.CGImage scale:retinaMultiplier orientation:result.imageOrientation];
+         
+     }];
     
 }
 
@@ -73,7 +92,7 @@ static UIColor *videoTitleColor;
     }
     
     // Video duration title
-    if ([self.type isEqual:ALAssetTypeVideo])
+    if (self.type == PHAssetMediaTypeVideo)
     {
         // Create a gradient from transparent to black
         CGFloat colors [] =
@@ -101,9 +120,6 @@ static UIColor *videoTitleColor;
         
         [videoIcon drawAtPoint:CGPointMake(2, startPoint.y + (videoTimeHeight - videoIcon.size.height) / 2)];
     }
-    
-    
-    
     
 }
 

@@ -17,6 +17,7 @@
     CGSize _imageSize;
     int _playState;//if is video(playing or pause) or image
     NSString * _type;
+    PHAssetMediaType _mediaType;
     
     AVAssetExportSession *exporter;
 }
@@ -43,7 +44,7 @@
         self.decelerationRate = UIScrollViewDecelerationRateFast;
         self.delegate = self;
         
-
+        
     }
     return self;
 }
@@ -53,7 +54,7 @@
 -(void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
-
+    
 }
 
 - (void)layoutSubviews
@@ -80,8 +81,8 @@
     
     self.videoStartMaskView.hidden = YES;
     
-
-
+    
+    
 }
 
 
@@ -98,11 +99,11 @@
     return _videoStartMaskView;
 }
 
--(CGRect)getCropRegion
+-(void)getCropRegion:(void(^)(CGRect))completeBlock
 {
-    if(self.alAsset)
+    if (self.phAsset)
     {
-        if([_type isEqualToString:ALAssetTypePhoto])
+        if (_mediaType == PHAssetResourceTypePhoto)
         {
             CGRect visibleRect = [self _calcVisibleRectForCropArea];//caculate visible rect for crop
             CGAffineTransform rectTransform = [self _orientationTransformedRectOfImage:self.imageView.image];//if need rotate caculate
@@ -121,97 +122,116 @@
             
             unitRect = [self rangeRestrictForRect:unitRect];
             
-            return unitRect;
+            completeBlock(unitRect);
         }
-        else if([_type isEqualToString:ALAssetTypeVideo])
+        else if (_mediaType == PHAssetMediaTypeVideo)
         {
-            UIInterfaceOrientation orientation = [IGCropView orientationForTrack:[AVAsset assetWithURL:self.alAsset.defaultRepresentation.url]];
+            PHImageManager *manager = [PHImageManager defaultManager];
+            PHVideoRequestOptions *requestOptions = [[PHVideoRequestOptions alloc] init];
+            requestOptions.networkAccessAllowed = true;
             
-            
-            CGRect visibleRect = [self convertRect:self.bounds toView:self.videoPlayer.view];
-            
-            CGAffineTransform t = CGAffineTransformMakeScale( 1 / self.videoPlayerScale, 1 / self.videoPlayerScale);
-            
-            visibleRect = CGRectApplyAffineTransform(visibleRect, t);
-            
-            //竖屏的视频裁剪框要先转换为横屏模式
-            CGFloat y;
-            switch (orientation)
-            {
-                case UIInterfaceOrientationLandscapeLeft:
-                    
-                    break;
-                case UIInterfaceOrientationLandscapeRight:
-                    
-                    break;
-                case UIInterfaceOrientationPortraitUpsideDown:
-                    y =  visibleRect.origin.y;
-                    visibleRect.origin.y = visibleRect.origin.x;
-                    visibleRect.origin.x = y;
-                    break;
-                default:
-                    y =  visibleRect.origin.y;
-                    visibleRect.origin.y = visibleRect.origin.x;
-                    visibleRect.origin.x = y;
-            };
-            
-            //得到videoTrack正常播放时候进行转换的transform
-            AVAssetTrack *videoTrack = [[[AVAsset assetWithURL:self.alAsset.defaultRepresentation.url] tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
-            CGAffineTransform txf = [videoTrack preferredTransform];
-            //要剪切的矩形进行坐标转换
-            visibleRect = CGRectApplyAffineTransform(visibleRect, txf);
-            
-            //转换为0-1
-            t = CGAffineTransformMakeScale(1.0f / self.alAsset.defaultRepresentation.dimensions.width, 1.0f / self.alAsset.defaultRepresentation.dimensions.height);
-            
-            CGRect croprect = CGRectApplyAffineTransform(visibleRect, t);
-            
-            croprect = [self rangeRestrictForRect:croprect];
-            
-            return croprect;
-            
+            [manager requestAVAssetForVideo:self.phAsset options:requestOptions resultHandler:^(AVAsset *avAsset, AVAudioMix *audioMix, NSDictionary *info) {
+                UIInterfaceOrientation orientation = [IGCropView orientationForTrack:avAsset];
+                
+                CGRect visibleRect = [self convertRect:self.bounds toView:self.videoPlayer.view];
+                
+                CGAffineTransform t = CGAffineTransformMakeScale( 1 / self.videoPlayerScale, 1 / self.videoPlayerScale);
+                
+                visibleRect = CGRectApplyAffineTransform(visibleRect, t);
+                
+                // Vertical screen video cropping frame must first be converted to landscape mode
+                CGFloat y;
+                switch (orientation)
+                {
+                    case UIInterfaceOrientationLandscapeLeft:
+                        
+                        break;
+                    case UIInterfaceOrientationLandscapeRight:
+                        
+                        break;
+                    case UIInterfaceOrientationPortraitUpsideDown:
+                        y =  visibleRect.origin.y;
+                        visibleRect.origin.y = visibleRect.origin.x;
+                        visibleRect.origin.x = y;
+                        break;
+                    default:
+                        y =  visibleRect.origin.y;
+                        visibleRect.origin.y = visibleRect.origin.x;
+                        visibleRect.origin.x = y;
+                };
+                
+                // Get videoTrack normal play time for conversion transform
+                AVAssetTrack *videoTrack = [[avAsset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
+                CGAffineTransform txf = [videoTrack preferredTransform];
+                // To cut a rectangular coordinate conversion
+                visibleRect = CGRectApplyAffineTransform(visibleRect, txf);
+                
+                // Converted to 0-1
+                t = CGAffineTransformMakeScale(1.0f / self.phAsset.pixelWidth, 1.0f / self.phAsset.pixelHeight);
+                
+                CGRect croprect = CGRectApplyAffineTransform(visibleRect, t);
+                
+                croprect = [self rangeRestrictForRect:croprect];
+                
+                completeBlock(croprect);
+            }];
         }
         else
-            return CGRectNull;
+            completeBlock(CGRectNull);
     }
     else
-        return CGRectNull;
+        completeBlock(CGRectNull);
     
-
+    
 }
 
-
-- (id)cropAsset
+- (void)cropAsset:(void(^)(id))completeBlock
 {
-    return [IGCropView cropAlAsset:self.alAsset withRegion:[self getCropRegion]];
-
+    [self getCropRegion:^(CGRect rect) {
+        [IGCropView cropPhAsset:self.phAsset withRegion:rect onComplete:^(id croppedAsset) {
+            completeBlock(croppedAsset);
+        }];
+    }];
 }
 
 
-+(id)cropAlAsset:(ALAsset *)asset withRegion:(CGRect)rect
++(void)cropPhAsset:(PHAsset *)asset withRegion:(CGRect)rect onComplete:(void(^)(id))completion
 {
     if(asset)
     {
-        if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto])//photo
+        if(asset.mediaType == PHAssetMediaTypeImage)//photo
         {
-            UIImage * image = [UIImage imageWithCGImage:asset.defaultRepresentation.fullResolutionImage scale:asset.defaultRepresentation.scale orientation:(UIImageOrientation)asset.defaultRepresentation.orientation];
-
-            return [self cropImage:image withRegion:rect];
+            PHImageManager *manager = [PHImageManager defaultManager];
+            
+            PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+            requestOptions.synchronous = true;
+            requestOptions.networkAccessAllowed = true;
+            requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+            requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+            
+            [manager requestImageForAsset:asset
+                               targetSize:PHImageManagerMaximumSize
+                              contentMode:PHImageContentModeDefault
+                                  options:requestOptions
+                            resultHandler:^void(UIImage *image, NSDictionary *info) {
+                                
+                                completion([self cropImage:image withRegion:rect]);
+                                
+                            }];
             
         }
-        else if([[asset valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypeVideo])//video
+        else if(asset.mediaType == PHAssetMediaTypeVideo)//video
         {
-            AVAsset * avAsset = [self cropVideo:asset withRegion:rect];
-            return avAsset;
-            
+            [self cropVideo:asset withRegion:rect onComplete:^(NSURL *movieURL) {
+                completion(movieURL);
+            }];
         }
         else
-            return nil;
+            completion(nil);
     }
     else
-        return nil;
+        completion(nil);
 }
-
 
 
 - (CGRect) rangeRestrictForRect:(CGRect )unitRect
@@ -232,73 +252,77 @@
 
 #pragma mark -Video Process
 
-
-+ (AVAsset *)cropVideo:(ALAsset *)alAsset withRegion:(CGRect)rect
++ (void)cropVideo:(PHAsset *)asset withRegion:(CGRect)rect onComplete:(void(^)(NSURL *))completion
 {
-    AVAsset *asset = [AVAsset assetWithURL:alAsset.defaultRepresentation.url];
-
-    UIInterfaceOrientation orientation = [IGCropView orientationForTrack:[AVAsset assetWithURL:alAsset.defaultRepresentation.url]];
+    PHImageManager *manager = [PHImageManager defaultManager];
+    PHVideoRequestOptions *requestOptions = [[PHVideoRequestOptions alloc] init];
+    requestOptions.networkAccessAllowed = true;
     
-    GPUImageMovie *movieFile;
-    GPUImageOutput<GPUImageInput> *filter;
-    GPUImageMovieWriter *movieWriter;
-    
-    movieFile = [[GPUImageMovie alloc] initWithAsset:asset];
-    movieFile.runBenchmark = YES;
-    movieFile.playAtActualSpeed = NO;
-    
-    filter = [[GPUImageCropFilter alloc] initWithCropRegion:rect];
-    //the camera sensor default orientation is LandscapeLeft
-    switch (orientation)
-    {
-        case UIInterfaceOrientationLandscapeLeft:
-            [filter setInputRotation:kGPUImageNoRotation atIndex:0];
-            
-            break;
-        case UIInterfaceOrientationLandscapeRight:
-            [filter setInputRotation:kGPUImageRotate180 atIndex:0];
-            
-            break;
-        case UIInterfaceOrientationPortraitUpsideDown:
-            [filter setInputRotation:kGPUImageRotateLeft atIndex:0];
-            
-            break;
-        default:
-            [filter setInputRotation:kGPUImageRotateRight atIndex:0];
-            
-    };
-    
-    
-    [movieFile addTarget:filter];
-    
-    NSString *pathToMovie = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/Movie.m4v"];
-    unlink([pathToMovie UTF8String]); // If a file already exists, AVAssetWriter won't let you record new frames, so delete the old movie
-    NSURL *movieURL = [NSURL fileURLWithPath:pathToMovie];
-    
-    movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(1080, 1080)];
-    
-    [filter addTarget:movieWriter];
-    
-    movieWriter.shouldPassthroughAudio = YES;
-    movieFile.audioEncodingTarget = movieWriter;
-    [movieFile enableSynchronizedEncodingUsingMovieWriter:movieWriter];
-    
-    [movieWriter startRecording];
-    [movieFile startProcessing];
-    
-    //    __weak GPUImageMovieWriter * weakWriter = movieWriter;
-    //    __weak GPUImageOutput<GPUImageInput>  * weakFilter = filter;
-    
-    //FIXME:
-    __block BOOL finished = NO;
-    [movieWriter setCompletionBlock:^{
-        NSLog(@"Completed Successfully");
-        [movieWriter finishRecording];
-        [filter removeTarget:movieWriter];
-        finished = YES;
+    [manager requestAVAssetForVideo:asset options:requestOptions resultHandler:^(AVAsset *avAsset, AVAudioMix *audioMix, NSDictionary *info) {
+        UIInterfaceOrientation orientation = [IGCropView orientationForTrack:avAsset];
+        
+        GPUImageMovie *movieFile;
+        GPUImageOutput<GPUImageInput> *filter;
+        GPUImageMovieWriter *movieWriter;
+        
+        movieFile = [[GPUImageMovie alloc] initWithAsset:avAsset];
+        movieFile.runBenchmark = YES;
+        movieFile.playAtActualSpeed = NO;
+        
+        filter = [[GPUImageCropFilter alloc] initWithCropRegion:rect];
+        //the camera sensor default orientation is LandscapeLeft
+        switch (orientation)
+        {
+            case UIInterfaceOrientationLandscapeLeft:
+                [filter setInputRotation:kGPUImageNoRotation atIndex:0];
+                
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                [filter setInputRotation:kGPUImageRotate180 atIndex:0];
+                
+                break;
+            case UIInterfaceOrientationPortraitUpsideDown:
+                [filter setInputRotation:kGPUImageRotateLeft atIndex:0];
+                
+                break;
+            default:
+                [filter setInputRotation:kGPUImageRotateRight atIndex:0];
+                
+        };
+        
+        
+        [movieFile addTarget:filter];
+        
+        NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+        NSString *pathToMovie = [cacheDir stringByAppendingString:@"/movie.mp4"];
+        unlink([pathToMovie UTF8String]); // If a file already exists, AVAssetWriter won't let you record new frames, so delete the old movie
+        NSURL *movieURL = [NSURL fileURLWithPath:pathToMovie];
+        
+        movieWriter = [[GPUImageMovieWriter alloc] initWithMovieURL:movieURL size:CGSizeMake(1080, 1080)];
+        
+        [filter addTarget:movieWriter];
+        
+        movieWriter.shouldPassthroughAudio = YES;
+        movieFile.audioEncodingTarget = movieWriter;
+        [movieFile enableSynchronizedEncodingUsingMovieWriter:movieWriter];
+        
+        [movieWriter startRecording];
+        [movieFile startProcessing];
+        
+        //    __weak GPUImageMovieWriter * weakWriter = movieWriter;
+        //    __weak GPUImageOutput<GPUImageInput>  * weakFilter = filter;
+        
+        //FIXME:
+        __block BOOL finished = NO;
+        [movieWriter setCompletionBlock:^{
+            NSLog(@"Completed Successfully");
+            [movieWriter finishRecording];
+            [filter removeTarget:movieWriter];
+            finished = YES;
+        }];
+        while (!finished);
+        completion(movieURL);
     }];
-    while (!finished);
-    return [AVAsset assetWithURL:movieURL];
 }
 
 
@@ -373,12 +397,10 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
         return UIInterfaceOrientationPortrait;
 }
 
-
-
-- (void)setAlAsset:(ALAsset *)asset
+- (void)setPhAsset:(PHAsset *)asset
 {
-    _alAsset = asset;
-    _type   = [asset valueForProperty:ALAssetPropertyType];
+    _phAsset = asset;
+    _mediaType = [asset mediaType];
     
     // clear the previous image
     [self.imageView removeFromSuperview];
@@ -388,72 +410,92 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
         [self.videoPlayer stop];
         [self.videoPlayer.view removeFromSuperview];
     }
-
+    
     
     //hide start mask and add observer
     self.videoStartMaskView.hidden = YES;
-
+    
     [[NSNotificationCenter defaultCenter] removeObserver:self name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
     
+    PHImageManager *manager = [PHImageManager defaultManager];
     
-    if([_type isEqual:ALAssetTypePhoto])//photo
+    if(_mediaType == PHAssetMediaTypeImage)//photo
     {
+        PHImageRequestOptions *requestOptions = [[PHImageRequestOptions alloc] init];
+        requestOptions.synchronous = false;
+        requestOptions.networkAccessAllowed = true;
+        requestOptions.resizeMode = PHImageRequestOptionsResizeModeExact;
+        requestOptions.deliveryMode = PHImageRequestOptionsDeliveryModeHighQualityFormat;
+        
+        [manager requestImageForAsset:asset
+                           targetSize:PHImageManagerMaximumSize
+                          contentMode:PHImageContentModeDefault
+                              options:requestOptions
+                        resultHandler:^void(UIImage *image, NSDictionary *info) {
+                            
+                            // reset our zoomScale to 1.0 before doing any further calculations
+                            self.zoomScale = 1.0;
+                            
+                            // make a new UIImageView for the new image
+                            self.imageView = [[UIImageView alloc] initWithImage:image];
+                            self.imageView.clipsToBounds = NO;
+                            [self addSubview:self.imageView];
+                            
+                            
+                            CGRect frame = self.imageView.frame;
+                            if (image.size.height > image.size.width) {
+                                frame.size.width = self.bounds.size.width;
+                                frame.size.height = (self.bounds.size.width / image.size.width) * image.size.height;
+                            } else {
+                                frame.size.height = self.bounds.size.height;
+                                frame.size.width = (self.bounds.size.height / image.size.height) * image.size.width;
+                            }
+                            self.imageView.frame = frame;
+                            [self configureForImageSize:self.imageView.bounds.size];
+                            _playState = 0;
+                        }];
         
         
-        UIImage * image = [UIImage imageWithCGImage:asset.defaultRepresentation.fullResolutionImage scale:asset.defaultRepresentation.scale orientation:(UIImageOrientation)asset.defaultRepresentation.orientation];
-        // reset our zoomScale to 1.0 before doing any further calculations
-        self.zoomScale = 1.0;
-        
-        // make a new UIImageView for the new image
-        self.imageView = [[UIImageView alloc] initWithImage:image];
-        self.imageView.clipsToBounds = NO;
-        [self addSubview:self.imageView];
-        
-        
-        CGRect frame = self.imageView.frame;
-        if (image.size.height > image.size.width) {
-            frame.size.width = self.bounds.size.width;
-            frame.size.height = (self.bounds.size.width / image.size.width) * image.size.height;
-        } else {
-            frame.size.height = self.bounds.size.height;
-            frame.size.width = (self.bounds.size.height / image.size.height) * image.size.width;
-        }
-        self.imageView.frame = frame;
-        [self configureForImageSize:self.imageView.bounds.size];
-        _playState = 0;
     }
     else
     {
-
+        PHVideoRequestOptions *requestOptions = [[PHVideoRequestOptions alloc] init];
+        requestOptions.networkAccessAllowed = true;
         
-        self.videoPlayer = [[MPMoviePlayerController alloc] initWithContentURL:asset.defaultRepresentation.url];
-        self.videoPlayer.controlStyle = MPMovieControlStyleNone;
-        self.videoPlayer.movieSourceType = MPMovieSourceTypeFile;
-        self.videoPlayer.scalingMode = MPMovieScalingModeAspectFill;
-        
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playerDidFinishedCallBack:) name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
-        
-        CGSize assetSize = asset.defaultRepresentation.dimensions;
-        CGSize size;
-        if (assetSize.height > assetSize.width) {
-            size.width = self.bounds.size.width;
-            size.height = (self.bounds.size.width / assetSize.width) * assetSize.height;
-            self.videoPlayerScale =  self.bounds.size.width / assetSize.width;
-
-        } else {
-            size.height = self.bounds.size.height;
-            size.width = (self.bounds.size.height / assetSize.height) * assetSize.width;
-            self.videoPlayerScale =  self.bounds.size.height / assetSize.height;
-
-        }
-        
-        self.videoPlayer.view.frame = CGRectMake(0, 0, size.width, size.height);
-
-        [self addSubview:self.videoPlayer.view];
-        [self.videoPlayer play];
-        [self configureForImageSize:self.videoPlayer.view.frame.size];
-        
-        _playState = 1;
+        [manager requestAVAssetForVideo:asset options:requestOptions resultHandler:^(AVAsset *avAsset, AVAudioMix *audioMix, NSDictionary *info) {
+            AVURLAsset *urlAsset = (AVURLAsset *)avAsset;
+            
+            self.videoPlayer = [[MPMoviePlayerController alloc] initWithContentURL: urlAsset.URL];
+            self.videoPlayer.controlStyle = MPMovieControlStyleNone;
+            self.videoPlayer.movieSourceType = MPMovieSourceTypeFile;
+            self.videoPlayer.scalingMode = MPMovieScalingModeAspectFill;
+            
+            [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(playerDidFinishedCallBack:) name:MPMoviePlayerPlaybackDidFinishNotification object:nil];
+            
+            CGSize size;
+            if (asset.pixelHeight > asset.pixelWidth) {
+                size.width = self.bounds.size.width;
+                size.height = (self.bounds.size.width / asset.pixelWidth) * asset.pixelHeight;
+                self.videoPlayerScale =  self.bounds.size.width / asset.pixelWidth;
+                
+            } else {
+                size.height = self.bounds.size.height;
+                size.width = (self.bounds.size.height / asset.pixelHeight) * asset.pixelWidth;
+                self.videoPlayerScale =  self.bounds.size.height / asset.pixelHeight;
+                
+            }
+            
+            self.videoPlayer.view.frame = CGRectMake(0, 0, size.width, size.height);
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self addSubview:self.videoPlayer.view];
+                [self.videoPlayer play];
+                [self configureForImageSize:self.videoPlayer.view.frame.size];
+                
+                _playState = 1;
+            });
+            
+        }];
     }
 }
 
@@ -488,9 +530,14 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
         _playState = 1;
         [self.videoPlayer play];
         self.videoStartMaskView.hidden = YES;
-
+        
         
     }
+}
+
+-(BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+    return YES;
 }
 
 #pragma mark - MPMoviePlayerController Notification
@@ -498,7 +545,7 @@ static CGRect IGScaleRect(CGRect rect, CGFloat scale)
 {
     _playState = 2;
     self.videoStartMaskView.hidden = NO;
-
+    
 }
 
 

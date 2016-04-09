@@ -38,36 +38,75 @@
 }
 
 - (IBAction)showPickerAction:(id)sender {
-    IGAssetsPickerViewController *picker = [[IGAssetsPickerViewController alloc] init];
-    picker.delegate = self;
-
-    [self presentViewController:picker animated:YES completion:NULL];
+    
+    [self getPermissionForPhotos:^(BOOL hasAccess) {
+        if (!hasAccess) {
+            NSLog(@"Cannot access photos, give this app permission for your photos.");
+            return;
+        }
+        
+        IGAssetsPickerViewController *picker = [[IGAssetsPickerViewController alloc] init];
+        picker.delegate = self;
+        picker.cropAfterSelect = true;
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self presentViewController:picker animated:YES completion:NULL];
+        });
+    }];
 }
 
 #pragma mark - IGAssetsPickerDelegate
 
--(void)IGAssetsPickerFinishCroppingToAsset:(id)asset
-{
-    if([asset isKindOfClass:[UIImage class]])//photo
-    {
+- (void)IGAssetsPickerFinishCroppingToAsset:(id)asset
+{    
+    if ([asset isKindOfClass:[UIImage class]]) {
         [self.videoPlayer stop];
         self.videoPlayer.view.hidden = YES;
         self.imageView.hidden = NO;
         self.imageView.image = (UIImage *)asset;
-    }
-    else if([asset isKindOfClass:[AVAsset class]])//video
-    {
-        self.videoPlayer.contentURL = ((AVURLAsset *)asset).URL;
-        self.videoPlayer.view.hidden = NO;
-        self.imageView.hidden = YES;
-        self.videoPlayer.view.frame = self.imageView.frame;
-        
-        [self.videoPlayer play];
+    } else if ([asset isKindOfClass:[NSURL class]]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.videoPlayer.contentURL = ((NSURL *) asset);
+            self.videoPlayer.view.hidden = NO;
+            self.imageView.hidden = YES;
+            self.videoPlayer.view.frame = self.imageView.frame;
+            [self.videoPlayer play];
+        });
     }
 }
 
--(void)IGAssetsPickerGetCropRegion:(CGRect)rect withAlAsset:(id)asset
+- (void)IGAssetsPickerGetCropRegion:(CGRect)rect withPhAsset:(PHAsset *)asset
 {
+    NSLog(@"IGAssetsPickerGetCropRegion");
+}
+
+- (void)getPermissionForPhotos:(void(^)(BOOL))completeBlock
+{
+    PHAuthorizationStatus status = [PHPhotoLibrary authorizationStatus];
     
+    switch (status)
+    {
+        case PHAuthorizationStatusAuthorized:
+            completeBlock(true);
+            break;
+        case PHAuthorizationStatusNotDetermined:
+        {
+            [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus authorizationStatus)
+             {
+                 if (authorizationStatus == PHAuthorizationStatusAuthorized)
+                 {
+                     completeBlock(true);
+                 }
+                 else
+                 {
+                     completeBlock(false);
+                 }
+             }];
+            break;
+        }
+        default:
+            completeBlock(false);
+            break;
+    }
 }
 @end

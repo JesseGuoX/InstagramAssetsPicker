@@ -9,11 +9,12 @@
 #import <UIKit/UIKit.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 #import <AVFoundation/AVFoundation.h>
+@import Photos;
 
 @protocol IGAssetsPickerDelegate <NSObject>
 
 //get crop region , range:0-1, you can crop when user post for good UE
--(void)IGAssetsPickerGetCropRegion:(CGRect)rect withAlAsset:(ALAsset *)asset;
+-(void)IGAssetsPickerGetCropRegion:(CGRect)rect withPhAsset:(PHAsset *)asset;
 
 //crop immediatly
 -(void)IGAssetsPickerFinishCroppingToAsset:(id)asset;
@@ -22,5 +23,6 @@
 
 @interface IGAssetsPickerViewController : UIViewController
 @property (nonatomic, strong) id<IGAssetsPickerDelegate> delegate;
+@property (readwrite, nonatomic) BOOL cropAfterSelect;
+@property (readwrite, nonatomic) PHFetchOptions *fetchOptions;
 @end
-

@@ -11,14 +11,17 @@
 #import <MediaPlayer/MediaPlayer.h>
 #import <AVFoundation/AVFoundation.h>
 
+@import Photos;
+
 @interface IGCropView : UIScrollView
 @property (nonatomic, strong) ALAsset * alAsset;
+@property (nonatomic, strong) PHAsset * phAsset;
 
-- (id)cropAsset;
+- (void)cropAsset:(void(^)(id))completeBlock;
 
-- (CGRect)getCropRegion;
+- (void)getCropRegion:(void(^)(CGRect))completeBlock;
 
 //for lately crop
-+(id)cropAlAsset:(ALAsset *)asset withRegion:(CGRect)rect;
++(void)cropPhAsset:(PHAsset *)asset withRegion:(CGRect)rect onComplete:(void(^)(id))completion;
 
 @end

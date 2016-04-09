@@ -21,9 +21,11 @@ With [CocoaPods](http://cocoapods.org/), add this line to your Podfile.
 #import "IGAssetsPicker.h"
 IGAssetsPickerViewController *picker = [[IGAssetsPickerViewController alloc] init];
 picker.delegate = self;
+picker.cropAfterSelect = true;
 [self presentViewController:picker animated:YES completion:NULL];
+
 ```
-if you want crop the asset later,you should comment the `IG_CROP_IMMEDIATELY` define in `IGAssetsPicker.h`
+If you want to crop the asset later, set `cropAfterSelect` to `false` on the `IGAssetsPickerViewController` instance.
 
 ## Author
 
@@ -38,4 +40,3 @@ if you want crop the asset later,you should comment the `IG_CROP_IMMEDIATELY` de
 ## License
 
 InstagramAssetsPicker is available under the MIT license. See the LICENSE file for more info.
-
